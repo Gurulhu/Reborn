@@ -89,6 +89,6 @@ if __name__ == "__main__":
 
     while( status != "down" ):
         try:
-            pass
+            gurulhutils.sleep( 1 )
         except Exception as e:
             if( debug ): print( "Error in main.py, main: ", e, flush=True )

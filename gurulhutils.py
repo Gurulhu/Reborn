@@ -5,6 +5,12 @@ import hashlib
 import importlib
 from pymongo import MongoClient
 
+import time
+
+def sleep( secs ):
+    s = int( secs ) * 0.001
+    time.sleep( s )
+
 debug = True
 
 def status_check( status, pipe=None, exit_flag=True ):

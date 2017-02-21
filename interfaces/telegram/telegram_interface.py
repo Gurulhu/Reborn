@@ -27,14 +27,17 @@ def get_queries():
     last_read = 0
 
     while( True ):
+        gurulhutils.sleep( 1 )
         try:
-            updates = bot.getUpdates( last_read )
+            updates = bot.getUpdates( last_read, timeout=5 )
 
             for query in updates:
                 fix_edited_message( query )
                 content_type, chat_type, chat_id = telepot.glance( query["message"] )
                 queries.append( { u'qtype': content_type, u'qinterface': u'Telegram', u'qcontent': query['message'][content_type], u'from': chat_id, u'extra': query} )
                 last_read = int( query["update_id"] ) + 1
+        except( telepot.exception.BadHTTPResponse ):
+            if( debug ): print( "Error in telegram_interface.py, get_queries(): Bad HTTP Response", flush=True )
         except Exception as e:
             if( debug ): print( "Error in telegram_interface.py, get_queries(): ", e, flush=True )
 
@@ -42,6 +45,7 @@ def digest_queries( queue ):
     global queries
 
     while( True ):
+        gurulhutils.sleep( 1 )
         for query in queries:
             queue.put( query )
             queries.remove( query )
@@ -50,6 +54,7 @@ def get_replies( read_pipe ):
     global replies
 
     while( True ):
+        gurulhutils.sleep( 1 )
         read_pipe.poll()
         reply = read_pipe.recv()
         replies.append( reply )
@@ -69,13 +74,17 @@ def digest_replies( ):
     }
 
     while( True ):
+        gurulhutils.sleep( 1 )
         for reply in replies:
+            print( reply, flush=True )
             try:
-                response_dictionary[ reply['rtype'] ]( reply['from'],reply['rcontent'], reply_markup=reply["keyboard"] )
+                if( "keyboard" in reply.keys() ):
+                    response_dictionary[ reply['rtype'] ]( reply['from'], reply['rcontent'], reply_markup=reply["keyboard"] )
+                else:
+                    response_dictionary[ reply['rtype'] ]( reply['from'], reply['rcontent'] )
+                replies.remove( reply )
             except Exception as e:
-                response_dictionary[ reply['rtype'] ]( reply['from'],reply['rcontent'] )
-            replies.remove( reply )
-
+                if( debug ): print( "Error in telegram_interface.py, digest_replies(): ", e, flush=True )
 
 def daemonize( read_pipe, write_pipe, queue, key ):
     global queries
@@ -86,20 +95,27 @@ def daemonize( read_pipe, write_pipe, queue, key ):
     status = init( key )
     gurulhutils.status_check( status, write_pipe )
 
+    thread_dictionary = {
+        "get_queries" : [ get_queries, (), True, "get_queries" ],
+        "digest_queries" : [ digest_queries, [ queue ], True, "digest_queries" ],
+        "get_replies" : [ get_replies, [ read_pipe ], True, "get_replies" ],
+        "digest_replies" : [ digest_replies, (), True, "digest_replies" ]
+    }
+
     thread_list = []
-    thread_list.append( threading.Thread( target = get_queries, daemon = True ) )
-    thread_list.append( threading.Thread( target = digest_queries, args = [ queue ], daemon = True ) )
-    thread_list.append( threading.Thread( target = get_replies, args = [ read_pipe ], daemon = True ) )
-    thread_list.append( threading.Thread( target = digest_replies, daemon = True ) )
+
+    for thread in thread_dictionary.values():
+        thread_list.append( threading.Thread( target = thread[0], args = thread[1], daemon = thread[2], name = thread[3] ) )
 
     for thread in thread_list:
         thread.start()
 
     while( status != "down" ):
+        gurulhutils.sleep( 1 )
         try:
             for thread in thread_list:
                 if( not thread.is_alive() ):
-                    thread.run()
+                    thread = threading.Thread( target = thread_dictionary[ thread.name ][0], args = thread_dictionary[ thread.name ][1], daemon = thread_dictionary[ thread.name ][2], name = thread_dictionary[ thread.name ][3] )
 
         except Exception as e:
             if( debug ): print( "Error in telegram_interface.py, main(): ", e, flush=True )

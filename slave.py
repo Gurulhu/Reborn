@@ -17,13 +17,13 @@ def module_list_init():
                 module["module"].init()
                 module_dictionary.update( { module["call"] : module })
                 final_list.append( module["call"] )
-            except:
-                pass
+            except Exception as e:
+                if( debug ): print( "Error in slave.py, module_list_init: ", e, flush=True )
         return "ok", final_list
     except Exception as e:
         return "fail", []
 
-def connect( module_list ):
+def connect():
     global server_socket
     server_socket = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
     server_socket.connect( ( socket.gethostname(), 13031 ) )
@@ -41,17 +41,17 @@ def listen():
             if( data == "ping"):
                 server_socket.send( gurulhutils.wrap_message( "pong" ) )
             else:
-                reply_type, reply_interface, reply = module_dictionary[ data["call"] ]["module"].reply( data )
-                data.update( { "rtype" : reply_type, "rinterface" : reply_interface, "rcontent" : reply } )
-                reply =  gurulhutils.wrap_message( data )
+                reply_interface, reply_type, reply = module_dictionary[ data["call"] ]["module"].reply( data )
+                data.update( { "rinterface" : reply_interface, "rtype" : reply_type, "rcontent" : reply } )
                 print( reply )
+                reply =  gurulhutils.wrap_message( data )
                 server_socket.send( reply )
 
         except Exception as e:
             if( debug ): print( "Error in slave.py, listen: ", e, flush=True )
             server_socket.close()
-
+            connect()
 
 status, module_list = module_list_init()
-connect( module_list )
+connect()
 listen()

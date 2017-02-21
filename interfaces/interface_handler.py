@@ -48,11 +48,12 @@ def shutdown():
 def route_replies( replies ):
     global interface_list
     while( True ):
-        query = replies.get()
-        if( query["rtype"] and query["rtype"] != "None" ):
+        gurulhutils.sleep( 1 )
+        reply = replies.get()
+        if( reply["rtype"] and reply["rtype"] != "None" ):
             for interface in interface_list:
-                if( query["rinterface"] == interface["name"] ):
-                    interface["write_pipe"].send( query )
+                if( reply["rinterface"] == interface["name"] ):
+                    interface["write_pipe"].send( reply )
                     break
 
 
@@ -67,7 +68,7 @@ def daemonize( read_pipe, write_pipe, queries, replies, keys ):
 
     try:
         while( status != "down" ):
-
+            gurulhutils.sleep( 1 )
             for interface in interface_list:
                 if( interface["status"] == "down" ):
                     print( interface["name"] + " Interface is down.", flush=True )

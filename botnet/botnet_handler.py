@@ -7,6 +7,7 @@ debug = True
 
 def server_setup():
     global server_socket
+
     try:
         server_socket = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
         server_socket.bind( ( socket.gethostname(), 13031 ) )
@@ -24,6 +25,7 @@ def server_loop():
     global module_list
 
     while( True ):
+        gurulhutils.sleep( 1 )
         try:
             slave_socket, address = server_socket.accept()
             slave_socket.setblocking( True )
@@ -49,7 +51,6 @@ def server_loop():
         except Exception as e:
             if( debug ): print( "Error in botnet_handler.py, server_loop: ", e, flush=True )
             server_socket.close()
-            input()
 
 def schedule( query, call ):
     query.update( { "call" : call } )
@@ -62,9 +63,11 @@ def schedule( query, call ):
 
 def route_loop( write_pipe, queries ):
     while( True ):
+        gurulhutils.sleep( 1 )
         query = queries.get()
         if( query["qtype"] == "text" ):
             token = query["qcontent"].split(" ")
+            print( module_list )
             if token[0] in module_list:
                 schedule( query, token[0] )
             elif( token[0] == "/botctrl" ):
@@ -79,6 +82,7 @@ def route_loop( write_pipe, queries ):
 def listen_loop( replies ):
     global slave_list
     while( True ):
+        gurulhutils.sleep( 1 )
         for slave in slave_list:
             try:
                 reply = slave["socket"].recv( 4096 )
@@ -90,7 +94,9 @@ def listen_loop( replies ):
             except BlockingIOError:
                 pass
             except Exception as e:
-                if( debug ): print( "Error in botnet_handler.py, listen: ", e, flush=True )
+                if( debug ): print( "Error in botnet_handler.py, listen_loop: ", e, flush=True )
+                slave["socket"].close()
+                slave_list.remove( slave )
 
 
 def daemonize( read_pipe, write_pipe, queries, replies, keys ):
@@ -113,4 +119,5 @@ def daemonize( read_pipe, write_pipe, queries, replies, keys ):
     listen_thread.start()
 
     while( True ):
+        gurulhutils.sleep( 1 )
         pass
