@@ -4,11 +4,25 @@ import gurulhutils
 
 debug = True
 
+def keys_get():
+    keys = {}
+    try:
+        count = 0
+        while( True ):
+            args = os.environ['init_value_' + str( count )].split(",")
+            keys.update( { os.environ['init_key_' + str( count )]: args } )
+            count += 1
+    except:
+        pass
+    return keys
+
 def module_list_init():
     global module_dictionary
 
     try:
-        status, database = gurulhutils.db_init( [ "ds015915.mlab.com", 15915, "heroku_ztxn2tqm", "gurulhu_slave", "slave4U" ] )
+        keys = keys_get()
+
+        status, database = gurulhutils.db_init( [ keys["Database"][0], keys["Database"][1], keys["Database"][2], keys["Database"][3], keys["Database"][4] ] )
         module_list = gurulhutils.import_list( database, "moduledb" )
         module_dictionary = {}
         final_list = []
@@ -26,7 +40,7 @@ def module_list_init():
 def connect():
     global server_socket
     server_socket = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-    server_socket.connect( ( socket.gethostname(), 13031 ) )
+    server_socket.connect( ( keys["Main"][0], keys["Main"][1] ) )
 
     server_socket.send( gurulhutils.wrap_message( { "modules" : module_list } ) )
 
