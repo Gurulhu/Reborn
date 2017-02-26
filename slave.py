@@ -20,8 +20,6 @@ def module_list_init():
     global module_dictionary
 
     try:
-        keys = keys_get()
-
         status, database = gurulhutils.db_init( [ keys["Database"][0], keys["Database"][1], keys["Database"][2], keys["Database"][3], keys["Database"][4] ] )
         module_list = gurulhutils.import_list( database, "moduledb" )
         module_dictionary = {}
@@ -66,6 +64,7 @@ def listen():
             server_socket.close()
             connect()
 
+keys = keys_get()
 status, module_list = module_list_init()
 connect()
 listen()
