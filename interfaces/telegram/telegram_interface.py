@@ -1,4 +1,5 @@
 import threading
+import time
 import telepot
 import gurulhutils
 
@@ -36,10 +37,10 @@ def get_queries():
                     fix_edited_message( query )
                     content_type, chat_type, chat_id = telepot.glance( query["message"] )
                     queries.append( { u'qtype': content_type, u'qinterface': u'Telegram', u'qcontent': query['message'][content_type], u'from': chat_id, u'extra': query} )
-                    last_read = int( query["update_id"] ) + 1
-                except Exception as e:
-                    queries.append( { u'qtype': "inline_query", u'qinterface': u'Telegram', u'qcontent': query['inline_query']["query"], u'id': query["inline_query"]["id"], u'extra': query} )
-                    last_read = int( query["update_id"] ) + 1
+                except:
+                    query_id, chat_id, query_string = telepot.glance( query["inline_query"], flavor="inline_query" )
+                    queries.append( { u'qtype': "inline_query", u'qinterface': u'Telegram', u'qcontent': query_string, u'from': chat_id, u'id': query_id, u'extra': query} )
+                last_read = int( query["update_id"] ) + 1
         except( telepot.exception.BadHTTPResponse ):
             if( debug ): print( "Error in telegram_interface.py, get_queries(): Bad HTTP Response", flush=True )
         except Exception as e:
@@ -81,17 +82,16 @@ def digest_replies( ):
         gurulhutils.sleep( 1 )
         for reply in replies:
             print( reply, flush=True )
-            if( reply["qtype"] == "inline_query" ):
-                bot.answerInlineQuery( inline_query_id=query["id"], results=query["rcontent"] )
-            else:
-                try:
-                    if( "keyboard" in reply.keys() ):
-                        response_dictionary[ reply['rtype'] ]( reply['from'], reply['rcontent'], reply_markup=reply["keyboard"] )
-                    else:
-                        response_dictionary[ reply['rtype'] ]( reply['from'], reply['rcontent'] )
-                    replies.remove( reply )
-                except Exception as e:
-                    if( debug ): print( "Error in telegram_interface.py, digest_replies(): ", e, flush=True )
+            try:
+                if( reply["qtype"] == "inline_query" ):
+                    bot.answerInlineQuery( inline_query_id=reply["id"], results=[ { "type" : "article", "id" : reply["id"], "title" : reply["qcontent"], "description" : reply["rcontent"], "message_text" : reply["rcontent"] } ] )
+                elif( "keyboard" in reply.keys() ):
+                    response_dictionary[ reply['rtype'] ]( reply['from'], reply['rcontent'], reply_markup=reply["keyboard"] )
+                else:
+                    response_dictionary[ reply['rtype'] ]( reply['from'], reply['rcontent'] )
+                replies.remove( reply )
+            except Exception as e:
+                if( debug ): print( "Error in telegram_interface.py, digest_replies(): ", e, flush=True )
 
 def daemonize( read_pipe, write_pipe, queue, key ):
     global queries

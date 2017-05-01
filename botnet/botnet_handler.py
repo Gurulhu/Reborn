@@ -65,7 +65,7 @@ def route_loop( write_pipe, queries ):
     while( True ):
         gurulhutils.sleep( 1 )
         query = queries.get()
-        if( query["qtype"] == "text" ):
+        if( query["qtype"] == "text" or query["qtype"] == "inline_query" ):
             token = query["qcontent"].split(" ")
             print( module_list )
             if token[0] in module_list:
