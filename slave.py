@@ -38,9 +38,7 @@ def module_list_init():
 
 def connect():
     global server_socket
-    server_socket = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-    server_socket.connect( ( keys["Main"][0], int( keys["Main"][1] ) ) )
-
+    server_socket = socket.create_connection( ( keys["Main"][0], int( keys["Main"][1] ) ) )
     server_socket.send( gurulhutils.wrap_message( { "modules" : module_list } ) )
 
 def listen():

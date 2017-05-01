@@ -50,7 +50,7 @@ def server_loop():
             pass
         except Exception as e:
             if( debug ): print( "Error in botnet_handler.py, server_loop: ", e, flush=True )
-            server_socket.close()
+            #server_socket.close()
 
 def schedule( query, call ):
     query.update( { "call" : call } )
