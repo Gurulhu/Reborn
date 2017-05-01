@@ -10,7 +10,7 @@ def server_setup():
 
     try:
         server_socket = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-        server_socket.bind( ( socket.gethostname(), 13031 ) )
+        server_socket.bind( ( "0.0.0.0", 13031 ) )
         server_socket.listen( 80 )
         server_socket.setblocking(False)
 
