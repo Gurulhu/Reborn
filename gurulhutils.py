@@ -87,6 +87,7 @@ def socket_send( socket, message ):
     message_wrap = wrap_message( message )
     message_len = format_length( message_wrap )
     message_len = wrap_message( message_len )
+    if( debug ): print( message_len, message_wrap)
     socket.send( message_len )
     socket.send( message_wrap )
 
@@ -95,4 +96,5 @@ def socket_recv( socket ):
     data_len = unwrap_message( data_len )
     data = socket.recv( int( data_len ) )
     data = unwrap_message( data )
+    if( debug ): print( data_len, data )
     return data

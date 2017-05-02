@@ -56,6 +56,7 @@ def listen():
                 data.update( { "rinterface" : reply_interface, "rtype" : reply_type, "rcontent" : reply } )
                 reply = data
 
+            if( debug ): print( reply )
             gurulhutils.socket_send( server_socket, reply )
 
 
