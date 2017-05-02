@@ -50,7 +50,7 @@ def listen():
             print( data )
 
             if( data == "ping"):
-                reply = gurulhutils.wrap_message( "pong" )
+                reply = "pong"
             else:
                 reply_interface, reply_type, reply = module_dictionary[ data["call"] ]["module"].reply( data )
                 data.update( { "rinterface" : reply_interface, "rtype" : reply_type, "rcontent" : reply } )
