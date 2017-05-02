@@ -31,14 +31,14 @@ def server_loop():
             slave_socket.setblocking( True )
             slave = { "socket" : slave_socket,
                     "address" : address }
-            handshake = slave_socket.recv( 4096 )
+            handshake = gurulhutils.socket_recv( slave_socket )
 
-            slave.update( gurulhutils.unwrap_message( handshake ) )
+            slave.update( handshake )
 
-            slave_socket.send( gurulhutils.wrap_message( "ping" ) )
-            pong = slave_socket.recv( 4096 )
+            gurulhutils.socket_send( slave_socket, "ping" )
+            pong = gurulhutils.socket_recv( slave_socket )
 
-            if( gurulhutils.unwrap_message( pong ) == "pong" ):
+            if( pong == "pong" ):
                 for module in slave["modules"]:
                     if module not in module_list:
                         module_list.append( module )
@@ -57,7 +57,7 @@ def schedule( query, call ):
 
     for slave in slave_list:
         if call in slave["modules"]:
-            slave["socket"].send( gurulhutils.wrap_message( query ) )
+            gurulhutils.socket_send( slave["socket"], query )
             return "ok"
     return "fail"
 
@@ -85,8 +85,7 @@ def listen_loop( replies ):
         gurulhutils.sleep( 1 )
         for slave in slave_list:
             try:
-                reply = slave["socket"].recv( 4096 )
-                reply = gurulhutils.unwrap_message( reply )
+                reply = gurulhutils.socket_recv( slave["socket"] )
                 if( reply["rtype"] == "warning" ):
                     pass
                 else:

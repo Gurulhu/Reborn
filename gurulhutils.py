@@ -75,3 +75,24 @@ def wrap_message( message ):
 
 def unwrap_message( message ):
     return json.loads( message.decode("utf-8") )
+
+def format_length( message ):
+    reply_len = str( len( message ) )
+    while len( reply_len ) < 6:
+        reply_len = '0' + reply_len
+
+    return reply_len
+
+def socket_send( socket, message ):
+    message_wrap = wrap_message( message )
+    message_len = format_length( message_wrap )
+    message_len = wrap_message( message_len )
+    socket.send( message_len )
+    socket.send( message_wrap )
+
+def socket_recv( socket ):
+    data_len = socket.recv( 8 )
+    data_len = unwrap_message( data_len )
+    data = socket.recv( int( data_len ) )
+    data = unwrap_message( data )
+    return data

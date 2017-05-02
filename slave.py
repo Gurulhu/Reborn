@@ -39,24 +39,25 @@ def module_list_init():
 def connect():
     global server_socket
     server_socket = socket.create_connection( ( keys["Main"][0], int( keys["Main"][1] ) ) )
-    server_socket.send( gurulhutils.wrap_message( { "modules" : module_list } ) )
+    gurulhutils.socket_send( server_socket, { "modules" : module_list } )
 
 def listen():
     global server_socket
 
     while( True ):
         try:
-            data = server_socket.recv( 4096 )
-            data = gurulhutils.unwrap_message( data )
+            data = gurulhutils.socket_recv( server_socket )
+            print( data )
 
             if( data == "ping"):
-                server_socket.send( gurulhutils.wrap_message( "pong" ) )
+                reply = gurulhutils.wrap_message( "pong" )
             else:
                 reply_interface, reply_type, reply = module_dictionary[ data["call"] ]["module"].reply( data )
                 data.update( { "rinterface" : reply_interface, "rtype" : reply_type, "rcontent" : reply } )
-                print( reply )
-                reply =  gurulhutils.wrap_message( data )
-                server_socket.send( reply )
+                reply = data
+
+            gurulhutils.socket_send( server_socket, reply )
+
 
         except Exception as e:
             if( debug ): print( "Error in slave.py, listen: ", e, flush=True )
