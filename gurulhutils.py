@@ -94,7 +94,14 @@ def socket_send( socket, message ):
 def socket_recv( socket ):
     data_len = socket.recv( 8 )
     data_len = unwrap_message( data_len )
-    data = socket.recv( int( data_len ) )
+    data_len = int( data_len )
+    while 1:
+        try:
+            data = socket.recv( data_len )
+            break
+        except Exception as e:
+            print(e)
+    print(data)
     data = unwrap_message( data )
     if( debug ): print( data_len, data )
     return data
