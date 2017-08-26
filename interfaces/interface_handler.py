@@ -7,8 +7,6 @@ import gurulhutils
 
 debug = True
 
-
-
 def interface_init( interface, queue, keys, read_pipe = None, write_pipe = None ):
     print( "Starting " + interface["name"] + " Interface . . . ", end="", flush=True )
     interface_read_pipe_parent, interface_write_pipe_child = multiprocessing.Pipe( False )

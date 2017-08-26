@@ -17,7 +17,7 @@ def keys_get():
         pass
     return keys
 
-def module_list_init():
+def module_list_init( keys ):
     global module_dictionary
 
     try:
@@ -27,9 +27,9 @@ def module_list_init():
         final_list = []
         for module in module_list:
             try:
-                module["module"].init()
-                module_dictionary.update( { module["call"] : module })
-                final_list.append( module["call"] )
+                if module["module"].init( keys ) == "ok":
+                    module_dictionary.update( { module["call"] : module })
+                    final_list.append( module["call"] )
             except Exception as e:
                 if( debug ): print( "Error in slave.py, module_list_init: ", e, flush=True )
         return "ok", final_list
@@ -52,9 +52,7 @@ def listen():
             if( data == "ping"):
                 reply = "pong"
             else:
-                reply_interface, reply_type, reply = module_dictionary[ data["call"] ]["module"].reply( data )
-                data.update( { "rinterface" : reply_interface, "rtype" : reply_type, "rcontent" : reply } )
-                reply = data
+                reply = module_dictionary[ data["call"] ]["module"].reply( data )
 
             if( debug ): print( reply )
             gurulhutils.socket_send( server_socket, reply )
@@ -66,6 +64,6 @@ def listen():
             connect()
 
 keys = keys_get()
-status, module_list = module_list_init()
+status, module_list = module_list_init( keys )
 connect()
 listen()

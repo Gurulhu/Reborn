@@ -86,9 +86,9 @@ def digest_replies( ):
                 if( reply["qtype"] == "inline_query" ):
                     bot.answerInlineQuery( inline_query_id=reply["id"], results=[ { "type" : "article", "id" : reply["id"], "title" : reply["qcontent"], "description" : reply["rcontent"], "message_text" : reply["rcontent"] } ] )
                 elif( "keyboard" in reply.keys() ):
-                    response_dictionary[ reply['rtype'] ]( reply['from'], reply['rcontent'], reply_markup=reply["keyboard"] )
+                    response_dictionary[ reply['rtype'] ]( reply['to'], reply['rcontent'], reply_markup=reply["keyboard"] )
                 else:
-                    response_dictionary[ reply['rtype'] ]( reply['from'], reply['rcontent'] )
+                    response_dictionary[ reply['rtype'] ]( reply['to'], reply['rcontent'] )
                 replies.remove( reply )
             except Exception as e:
                 if( debug ): print( "Error in telegram_interface.py, digest_replies(): ", e, flush=True )
