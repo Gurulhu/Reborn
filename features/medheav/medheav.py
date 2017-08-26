@@ -1,5 +1,3 @@
-import random
-import pandas as pd
 import gurulhutils
 from pymongo import MongoClient
 
