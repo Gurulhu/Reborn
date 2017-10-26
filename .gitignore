@@ -4,7 +4,6 @@ init_bot
 init_slave
 
 features/mtguru
-features/chat
 features/timeguru
 interfaces/interface_handler_pure_async.py
 interfaces/interface_handler_misc.py
