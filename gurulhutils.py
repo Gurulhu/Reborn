@@ -48,27 +48,28 @@ def hashfile( f, hash, bs=65536 ):
         buf = f.read(bs)
     return hash.digest()
 
-def import_list( database, db_name ):
+def import_modules( database, db_name ):
     db = database.get_collection( db_name )
 
-    import_list = []
+    import_dict = {}
 
     cursor = db.find()
     for i in range( 0, cursor.count() ):
-        if( os.path.isfile( cursor[i]["path"]) ):
-            if( cursor[i]["hash"] == str( hashfile( cursor[i]["path"], hashlib.sha256() ) ) ):
-                if( debug ): print( cursor[i]["name"], flush=True )
+        name = cursor[i]["name"]
+        if os.path.isfile( cursor[i]["path"]):
+            if( debug ): print( "Module found: ", name, flush=True )
+            if cursor[i]["hash"] == str( hashfile( cursor[i]["path"], hashlib.sha256() ) ):
                 try:
-                    import_list.append( cursor[i] )
-                    import_list[-1].update( { "module" : importlib.import_module( cursor[i]["import"] ) } )
+                    module = cursor[i]
+                    module.update( { "module" : importlib.import_module( cursor[i]["import"] ) } )
+                    print( module )
+                    import_dict.update( { name : module} )
                 except Exception as e:
-                    if( debug ): print( "Could not import: ", cursor[i]["name"], "\nReason: ", e, flush=True )
+                    if( debug ): print( "Could not import: ", name, "\nReason: ", e, flush=True )
             else:
-                if( debug ): print( "File is corrupted: ", cursor[i]["name"], flush=True)
-        else:
-            if( debug ): print( "Module not found: ", cursor[i]["name"], flush=True )
+                if( debug ): print( "File is corrupted: ", name, flush=True)
 
-    return import_list
+    return import_dict
 
 def wrap_message( message ):
     return json.dumps( message ).encode("utf-8")
@@ -105,3 +106,29 @@ def socket_recv( socket ):
     data = unwrap_message( data )
     if( debug ): print( data_len, data )
     return data
+
+def encapsulate_query( query, info ):
+    template = {
+        "qfrom"         :
+            {
+                "user"      : info["user"],
+                "interface" :
+                {
+                    "name"      : info["interface"]["name"],
+                    "specific"  : info["interface"]["specific"],
+                }
+            },
+        "qcontent"      : info["query"],
+        "rto"           :
+            [{
+                "user"      : "",
+                "interface" :
+                {
+                    "name"      : "",
+                    "specific"  : {},
+                }
+            }],
+        "rcontent"      : ""
+    }
+
+    return template
