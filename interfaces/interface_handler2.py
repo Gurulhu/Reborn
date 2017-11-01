@@ -54,7 +54,7 @@ class InterfaceHandler(object):
             try:
                 sysmsg = self.system.get(True, 1)
                 if self.name in sysmsg["topic"]:
-                    print( sysmsg["content"] )
+                    print( self.name, sysmsg["content"] )
                     if sysmsg["code"] == -1:
                         self.alive = False
                 else:
@@ -77,7 +77,7 @@ class InterfaceHandler(object):
 
         while( False in [ self.Interfaces[interface].safe for interface in self.Interfaces.keys() ] ):
             print( [ self.Interfaces[interface].name + " = " + str( self.Interfaces[interface].safe ) for interface in self.Interfaces.keys() ] )
-            gurulhutils.sleep(1000)
+            gurulhutils.sleep(2500)
 
         self.safe = True
         self.system.put( {"topic":[self.parent, self.name],

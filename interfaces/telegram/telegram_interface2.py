@@ -1,7 +1,7 @@
+import gurulhutils
 import threading
 import telepot
 import queue
-import time
 
 class Interface(object):
     """docstring for ."""
@@ -83,7 +83,7 @@ class Interface(object):
             try:
                 sysmsg = self.system.get(True, 1)
                 if self.name in sysmsg["topic"]:
-                    print( sysmsg["content"] )
+                    print( self.name, sysmsg["content"] )
                     if sysmsg["code"] == -1:
                         self.alive = False
                 else:
