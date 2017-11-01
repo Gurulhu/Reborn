@@ -1,6 +1,7 @@
 interface_creation_script.py
 module_creation_script.py
 init_bot
+init_bot2
 init_slave
 
 features/mtguru

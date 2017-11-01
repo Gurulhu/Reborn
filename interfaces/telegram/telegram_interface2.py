@@ -17,13 +17,16 @@ class Interface(object):
         self.monitor_loop = threading.Thread( target=self.monitor, args=() )
 
     def start(self):
+        print( "Starting Telegram Interface.", flush=True)
         try:
             self.alive = True
             self.query_loop.start()
             self.reply_loop.start()
             self.monitor_loop.start()
+            print( "Telegram Interface up!", flush=True)
             return "ok"
         except:
+            print( "Telegram Interface failed.", flush=True)
             return "failed"
 
     def digest_queries(self):

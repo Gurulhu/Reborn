@@ -16,14 +16,17 @@ class InterfaceHandler(object):
         self.alive = False
 
     def start(self):
+        print( "Starting Interface Handler.", flush=True)
         self.alive = True
         self.refresh_list()
         for interface in self.interface_dict.keys():
             self.instanciate( interface )
         self.alive = True
         self.loop.start()
+        print( "Interface Handler up!", flush=True)
 
     def refresh_list(self):
+        print( "Refreshing Interface list.", flush=True)
         status, database = gurulhutils.db_init( self.keys["Database"] )
         if status:
             self.interface_dict = gurulhutils.import_modules( database, "interfacedb" )
@@ -33,6 +36,7 @@ class InterfaceHandler(object):
 
     def instanciate(self, name):
         if name in self.interface_dict.keys():
+            print( "Creating " + name + ".", flush=True)
             try:
                 self.interfaces.update( { name:self.interface_dict[name]["module"].Interface( self.keys[name], self.queries, self.replies, self.system ) } )
                 self.interfaces[name].start()
