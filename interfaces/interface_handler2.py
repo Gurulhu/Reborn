@@ -4,26 +4,28 @@ import gurulhutils
 
 class InterfaceHandler(object):
     """docstring for ."""
-    def __init__(self, keys, queries, replies, system):
+    def __init__(self, keys, parent, queries, replies, system):
         self.name = "Interface Handler"
+        self.parent = parent
         self.keys = keys
         self.queries = queries
         self.replies = replies
         self.system = system
+        self.alive = False
+        self.safe = False
         self.loop = threading.Thread( target=self.monitor, args=() )
         self.interface_dict = {} #info and imports
-        self.interfaces = {} #actual instances
-        self.alive = False
+        self.Interfaces = {} #actual instances
 
     def start(self):
-        print( "Starting Interface Handler.", flush=True)
+        print( "Starting " + self.name + ".", flush=True)
         self.alive = True
         self.refresh_list()
         for interface in self.interface_dict.keys():
             self.instanciate( interface )
         self.alive = True
         self.loop.start()
-        print( "Interface Handler up!", flush=True)
+        print( self.name + " up!", flush=True)
 
     def refresh_list(self):
         print( "Refreshing Interface list.", flush=True)
@@ -38,8 +40,12 @@ class InterfaceHandler(object):
         if name in self.interface_dict.keys():
             print( "Creating " + name + ".", flush=True)
             try:
-                self.interfaces.update( { name:self.interface_dict[name]["module"].Interface( self.keys[name], self.queries, self.replies, self.system ) } )
-                self.interfaces[name].start()
+                self.Interfaces.update( { name: self.interface_dict[name]["module"].Interface( self.keys[name],
+                                                                                                self.name,
+                                                                                                self.queries,
+                                                                                                self.replies,
+                                                                                                self.system ) } )
+                self.Interfaces[name].start()
             except Exception as e:
                 print( "Error in " + self.name + ":", e, flush=True )
 
@@ -47,10 +53,10 @@ class InterfaceHandler(object):
         while self.alive:
             try:
                 sysmsg = self.system.get(True, 1)
-                if "interface" in sysmsg["topic"]:
+                if self.name in sysmsg["topic"]:
                     print( sysmsg["content"] )
                     if sysmsg["code"] == -1:
-                        self.kill()
+                        self.alive = False
                 else:
                     self.system.put( sysmsg )
 
@@ -59,17 +65,22 @@ class InterfaceHandler(object):
             except Exception as e:
                 print( "Error in " + self.name + ":", e, flush=True )
 
-            if self.alive is False:
-                self.system.put( {"topic":["main", "interface"],
-                                "code":-1,
-                                "ttl": 10,
-                                "content":self.name + " has stopped working."})
+        self.cleanup()
 
-    def kill(self):
-        self.alive = False
+    def cleanup(self):
+        print( self.name + " is shutting down.", flush=True)
+        for interface in self.Interfaces.keys():
+            self.system.put( {"topic":[self.Interfaces[interface].name],
+                            "code":-1,
+                            "ttl": 10,
+                            "content": self.name + " is shutting down."})
 
-        self.system.put( {"topic":["interface"],
+        while( False in [ self.Interfaces[interface].safe for interface in self.Interfaces.keys() ] ):
+            print( [ self.Interfaces[interface].name + " = " + str( self.Interfaces[interface].safe ) for interface in self.Interfaces.keys() ] )
+            gurulhutils.sleep(1000)
+
+        self.safe = True
+        self.system.put( {"topic":[self.parent, self.name],
                         "code":-1,
                         "ttl": 10,
-                        "content":"Interface Handler has shut down."})
-        #fix
+                        "content": self.name + " has shut down."})

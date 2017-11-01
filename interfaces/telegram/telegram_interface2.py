@@ -5,28 +5,30 @@ import time
 
 class Interface(object):
     """docstring for ."""
-    def __init__(self, key, queries, replies, system):
+    def __init__(self, key, parent, queries, replies, system):
         self.bot = telepot.Bot( key[0] )
         self.name = "Telegram Interface"
+        self.parent = parent
         self.queries = queries
         self.replies = replies
         self.system = system
         self.alive = False
+        self.safe = False
         self.query_loop = threading.Thread( target=self.digest_queries, args=() )
         self.reply_loop = threading.Thread( target=self.digest_replies, args=() )
         self.monitor_loop = threading.Thread( target=self.monitor, args=() )
 
     def start(self):
-        print( "Starting Telegram Interface.", flush=True)
+        print( "Starting " + self.name + ".", flush=True)
         try:
             self.alive = True
             self.query_loop.start()
             self.reply_loop.start()
             self.monitor_loop.start()
-            print( "Telegram Interface up!", flush=True)
+            print( self.name + " up!", flush=True)
             return "ok"
         except:
-            print( "Telegram Interface failed.", flush=True)
+            print( self.name + " failed.", flush=True)
             return "failed"
 
     def digest_queries(self):
@@ -80,10 +82,10 @@ class Interface(object):
         while self.alive:
             try:
                 sysmsg = self.system.get(True, 1)
-                if "telegram" in sysmsg["topic"]:
+                if self.name in sysmsg["topic"]:
                     print( sysmsg["content"] )
                     if sysmsg["code"] == -1:
-                        self.kill()
+                        self.alive = False
                 else:
                     self.system.put( sysmsg )
 
@@ -92,11 +94,14 @@ class Interface(object):
             except Exception as e:
                 print( "Error in " + self.name + ":", e, flush=True )
 
-    def kill(self):
-        self.alive = False
-        while ( self.query_loop.is_alive() or self.reply_loop.is_alive() ):
-            time.sleep(1)
-        self.system.put( {"topic":["interface", "telegram"],
+        self.cleanup()
+
+    def cleanup(self):
+        print( self.name +" is shutting down.", flush=True)
+        self.query_loop.join()
+        self.reply_loop.join()
+        self.safe = True
+        self.system.put( {"topic":[self.parent, self.name],
                         "code":-1,
                         "ttl": 10,
                         "content":"Telegram Interface has shut down."})

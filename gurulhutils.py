@@ -62,7 +62,6 @@ def import_modules( database, db_name ):
                 try:
                     module = cursor[i]
                     module.update( { "module" : importlib.import_module( cursor[i]["import"] ) } )
-                    print( module )
                     import_dict.update( { name : module} )
                 except Exception as e:
                     if( debug ): print( "Could not import: ", name, "\nReason: ", e, flush=True )
