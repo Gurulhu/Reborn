@@ -11,7 +11,7 @@ def sleep( secs ):
     s = int( secs ) * 0.001
     time.sleep( s )
 
-debug = True
+debug = False
 
 def status_check( status, pipe=None, exit_flag=True ):
     if( status != "ok" ):
@@ -100,8 +100,7 @@ def socket_recv( socket ):
             data = socket.recv( data_len )
             break
         except Exception as e:
-            print(e)
-    print(data)
+            print( "Error in gurulhutils.ocket_recv:", e, flush=True )
     data = unwrap_message( data )
     if( debug ): print( data_len, data )
     return data

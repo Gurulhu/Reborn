@@ -32,9 +32,6 @@ class InterfaceHandler(object):
         status, database = gurulhutils.db_init( self.keys["Database"] )
         if status:
             self.interface_dict = gurulhutils.import_modules( database, "interfacedb" )
-            return "ok"
-        else:
-            return "failed"
 
     def instanciate(self, name):
         if name in self.interface_dict.keys():

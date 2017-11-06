@@ -3,6 +3,7 @@ module_creation_script.py
 init_bot
 init_bot2
 init_slave
+init_slave2
 
 features/mtguru
 features/timeguru

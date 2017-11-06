@@ -56,7 +56,8 @@ class BotnetHandler( object ):
                 info = gurulhutils.socket_recv( sock )
                 if info["hash"] == 0: #arrumar
                     slave["socket"].setblocking( False )
-                    self.Slaves.update( { slave_hasher : slave } )
+                    self.Slaves.update( { self.slave_hasher : slave } )
+                    self.slave_hasher += 1
 
             except BlockingIOError:
                 pass
@@ -77,6 +78,22 @@ class BotnetHandler( object ):
 
     def listen(self):
         while self.alive:
+            bad_slaves = []
+            for slave in self.Slaves.keys():
+                try:
+                    data = gurulhutils.socket_recv( self.Slaves[slave]["socket"] )
+                except BlockingIOError:
+                    pass
+                except Exception as e:
+                    bad_slaves.append( slave )
+
+            if len( bad_slaves ) > 0:
+                self.system.put( {"topic":[self.name],
+                                "code":1,
+                                "ttl": 3,
+                                "content": str( len( bad_slaves ) ) + " slaves have failed and got killed.\n" + str( bad_slaves ) } )
+            for slave in bad_slaves:
+                del( self.Slaves[ slave ] )
             gurulhutils.sleep(100)
 
     def monitor(self):
@@ -84,7 +101,7 @@ class BotnetHandler( object ):
             try:
                 sysmsg = self.system.get(True, 1)
                 if self.name in sysmsg["topic"]:
-                    print( self.name, sysmsg["content"] )
+                    print( self.name + " sysmsg:", sysmsg["content"] )
                     if sysmsg["code"] == -1:
                         self.alive = False
                 else:
@@ -99,7 +116,8 @@ class BotnetHandler( object ):
 
     def cleanup(self):
         for slave in self.Slaves.keys():
-            self.Slaves[slave].socket.close()
+            pass
+            #self.Slaves[slave].socket.close()
 
         self.socket.close()
 
