@@ -32,7 +32,7 @@ class Bot( object ):
                                                                     self.queries,
                                                                     self.replies,
                                                                     self.system )
-        self.InterfaceHandler.start()
+        return self.InterfaceHandler.start()
 
     def botnet_handler_create(self):
         print( "Creating Botnet Handler.", flush=True)
@@ -41,16 +41,24 @@ class Bot( object ):
                                                                     self.queries,
                                                                     self.replies,
                                                                     self.system )
-        self.BotnetHandler.start()
+        return self.BotnetHandler.start()
 
     def start(self):
-        print( "Starting Bot.", flush=True)
-        self.keys_create()
-        self.interface_handler_create()
-        self.botnet_handler_create()
-        print( "Bot up!", flush=True)
+        try:
+            print( "Starting Bot.", flush=True)
+            self.keys_create()
+            while self.botnet_handler_create() < 0 :
+                gurulhutils.sleep(5000) #Most likely open sockets waiting to be flushed
+                print( "Retrying Botnet Handler\n", flush = True )
+            while self.interface_handler_create() < 0 :
+                gurulhutils.sleep(1000)
+                print( "Retrying Interface Handler\n", flush = True )
 
-    def kill(self):
+            print( "Bot up!", flush=True)
+        except:
+            self.cleanup()
+
+    def cleanup(self):
         self.system.put( {"topic":[self.InterfaceHandler.name], "content":"Bot is shutting down.", "code":-1, "ttl":10} )
         self.system.put( {"topic":[self.BotnetHandler.name], "content":"Bot is shutting down.", "code":-1, "ttl":10} )
 
@@ -70,4 +78,4 @@ if __name__ == "__main__":
         input()
     except:
         pass
-    main.kill()
+    main.cleanup()

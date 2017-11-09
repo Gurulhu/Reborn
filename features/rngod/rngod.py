@@ -19,5 +19,7 @@ def reply( query ):
   else:
       reply = help()
 
-  query.update( { "rinterface" : query["qinterface"], "to": query["from"], "rtype" : "text", "rcontent" : reply } )
+  rinterface = query["qinterface"]
+  rinterface["specific"].update( { "type" : "text" } )
+  query.update( { "rinterface" : { rinterface["name"] : rinterface }, "to": query["from"], "rcontent" : reply } )
   return query

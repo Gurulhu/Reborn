@@ -23,9 +23,14 @@ class InterfaceHandler(object):
         self.refresh_list()
         for interface in self.interface_dict.keys():
             self.instanciate( interface )
-        self.alive = True
         self.loop.start()
-        print( self.name + " up!", flush=True)
+        if self.alive:
+            print( self.name + " up!", flush=True)
+            return 0
+        else:
+            print( self.name + " has failed!", flush=True)
+            self.kill()
+            return -1
 
     def refresh_list(self):
         print( "Refreshing Interface list.", flush=True)

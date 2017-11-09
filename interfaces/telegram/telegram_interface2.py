@@ -41,13 +41,15 @@ class Interface(object):
                     if "edited_message" in query.keys():
                         query.update( { "message": query["edited_message"] } )
                     content_type, chat_type, chat_id = telepot.glance( query["message"] )
-                    self.queries.put( {"qinterface" :
+                    msg = {"qinterface" :
                                         {
-                                            "name"      : "Telegram",
+                                            "name"      : self.name,
                                             "specific"  : { "type": content_type }
                                         },
                                     "qcontent": query["message"][content_type],
-                                    "from" : chat_id })
+                                    "from" : chat_id }
+                    self.queries.put( msg )
+                    print( "Incomming via: " + self.name, msg, flush=True )
                     last_read = int( query["update_id"] ) + 1
             except Exception as e:
                 print( "Error in " + self.name + ":", e, flush=True )
@@ -68,8 +70,9 @@ class Interface(object):
         while self.alive:
             try:
                 reply = self.replies.get(True, 1)
-                if "Telegram" in reply["rinterface"].keys():
-                    response_dictionary[ reply["rinterface"]["Telegram"]["specific"]["type"] ]( reply['to'], reply['rcontent'] )
+                if self.name in reply["rinterface"].keys():
+                    print( "Leaving via: " + self.name, reply, flush = True )
+                    response_dictionary[ reply["rinterface"][self.name]["specific"]["type"] ]( reply['to'], reply['rcontent'] )
                 else:
                     self.replies.put(reply)
 

@@ -14,7 +14,9 @@ class Slave( object ):
     def start( self ):
         self.keys_create()
         self.refresh_list()
+        self.init_modules()
         self.handshake_connect()
+        self.main()
 
     def keys_create( self ):
         print( "Gathering keys.", flush=True)
@@ -30,10 +32,16 @@ class Slave( object ):
         if status:
             self.module_dict = gurulhutils.import_modules( database, "moduledb" )
 
+    def init_modules( self ):
+        print( "Initiating modules.", flush=True)
+        for module in self.module_dict:
+            self.module_dict[module]["module"].init( self.keys )
+
     def hash_itself( self ):
-        return 0
+        return 0 #arrumar
 
     def handshake_connect( self ):
+        print( "Connecting to Server.", flush=True)
         self.Server = None
         server_addr = ( socket.gethostbyname( self.keys["Server"][0] ), int( self.keys["Server"][1] ) )
         server = socket.create_connection( server_addr )
@@ -46,8 +54,20 @@ class Slave( object ):
             self.Server = server
 
 
+    def main( self ):
+        print( "Slave up!", flush=True )
+        while self.alive:
+            try:
+                query = gurulhutils.socket_recv( self.Server )
+                print( query )
+                reply = self.module_dict[ query["module"] ]["module"].reply( query )
+                gurulhutils.socket_send( self.Server, reply )
+            except BlockingIOError:
+                pass
+            except Exception as e:
+                print( e, flush=True )
+                self.alive = False
+
 if __name__ == "__main__":
     slave = Slave()
     slave.start()
-    gurulhutils.sleep(100)
-    gurulhutils.socket_send( slave.Server, "Olar" )

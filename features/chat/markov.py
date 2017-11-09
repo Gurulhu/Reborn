@@ -34,5 +34,7 @@ def recursion( word ):
 def reply( query ):
     reply = recursion( "_begin" )[1:]
 
-    query.update( { "rinterface" : query["qinterface"], "to": query["from"], "rtype" : "text", "rcontent" : reply } )
+    rinterface = query["qinterface"]
+    rinterface["specific"].update( { "type" : "text" } )
+    query.update( { "rinterface" : { rinterface["name"] : rinterface }, "to": query["from"], "rcontent" : reply } )
     return query
