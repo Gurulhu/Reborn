@@ -18,6 +18,7 @@ class BotnetHandler( object ):
         self.slave_hasher = 0
         self.modules = []
         self.calls = {}
+        self.load = {}
         self.server_loop = threading.Thread( target=self.server, args=() )
         self.route_loop = threading.Thread( target=self.route, args=() )
         self.listen_loop = threading.Thread( target=self.listen, args=() )
@@ -52,6 +53,9 @@ class BotnetHandler( object ):
         for i in range( 0, cursor.count() ): #creates a two-way dic to translate modules into calls.
             calls.update( { cursor[i]["call"] : cursor[i]["name"] } )
             modules.append( cursor[i]["name"] )
+            if cursor[i]["name"] not in self.load.keys():
+                self.load[cursor[i]["name"]] = queue.Queue()
+
         self.calls = calls
         self.modules = modules
 
@@ -79,11 +83,13 @@ class BotnetHandler( object ):
             slave["socket"].setblocking( False )
             if info["hash"] == 0: #arrumar
                 slave.update( { "hash" : info["hash"], "modules" : info["modules"] } )
-                self.Slaves.update( { self.slave_hasher : slave } )
+                slave_number = self.slave_hasher
                 self.slave_hasher += 1
+                self.Slaves.update( { slave_number : slave } )
                 for module in slave["modules"]:
                     if module not in self.modules:
                         self.refresh_module_list()
+                    self.load[ module ].put( slave_number )
 
         except BlockingIOError:
             pass
@@ -108,21 +114,39 @@ class BotnetHandler( object ):
         while self.alive:
             try:
                 query = self.queries.get(True, 1)
-                if type( query["qcontent"] ) == str:
-                    try:
-                        module = self.calls[ query["qcontent"].split(" ")[0] ]
-                    except:
-                        module = self.calls[ "chat" ]
-
-                    query.update( { "module" : module } )
-                    keys = list( self.Slaves.keys() )
-                    for slave in keys:
-                        if module in self.Slaves[slave]["modules"]:
-                            print( "Routing to " + str( self.Slaves[slave]["address"] ), flush=True )
-                            gurulhutils.socket_send( self.Slaves[slave]["socket"], query )
+                self.schedule( query )
 
             except queue.Empty:
                 pass
+
+
+    def schedule( self, query ):
+        try:
+            if type( query["qcontent"] ) == str:
+                if query["qcontent"].split(" ")[0] in self.calls.keys():
+                    module = self.calls[ query["qcontent"].split(" ")[0] ]
+                elif "chat" in self.calls.keys():
+                    module = self.calls[ "chat" ]
+                else:
+                    self.queries.put( query )
+                    raise NotImplementedError
+
+            while self.load[ module ].empty() is False:
+                slave = self.load[ module ].get()
+                if slave in self.Slaves.keys():
+                    print( "Routing to " + str( slave) + " : " + str( self.Slaves[slave]["address"] ), flush=True )
+                    query.update( {"module" : module} )
+                    gurulhutils.socket_send( self.Slaves[slave]["socket"], query )
+                    self.load[ query["module"] ].put( slave )
+                    break
+
+            if self.load[ module ].empty():
+                self.queries.put( query )
+
+        except NotImplementedError:
+            pass
+        except Exception as e:
+            print( e, flush=True )
 
 
     def listen(self):
@@ -172,13 +196,15 @@ class BotnetHandler( object ):
     def cleanup(self):
         keys = list( self.Slaves.keys() )
         for slave in keys:
-            #self.Slaves[slave].socket.close()
-            pass
+            try:
+                self.Slaves[slave]["socket"].close()
+            except Exception as e:
+                print( e, flush = True )
 
         try:
             self.socket.close()
         except Exception as e:
-                        print( "Error in " + self.name + ":", e, flush=True )
+            print( "Error in " + self.name + ":", e, flush=True )
 
         self.server_loop.join()
         self.route_loop.join()

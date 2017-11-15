@@ -100,7 +100,8 @@ def socket_recv( socket ):
             data = socket.recv( data_len )
             break
         except Exception as e:
-            print( "Error in gurulhutils.ocket_recv:", e, flush=True )
+            if debug: print( "Error in gurulhutils.socket_recv:", e, flush=True )
+            
     data = unwrap_message( data )
     if( debug ): print( data_len, data )
     return data
