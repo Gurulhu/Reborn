@@ -5,7 +5,6 @@ init_bot2
 init_slave
 init_slave2
 
-features/mtguru
 features/timeguru
 interfaces/interface_handler_pure_async.py
 interfaces/interface_handler_misc.py

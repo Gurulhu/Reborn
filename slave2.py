@@ -77,7 +77,7 @@ class Slave( object ):
             except BlockingIOError:
                 pass
 
-            except json.JSONDecodeError or ConectionResetError:
+            except JSONDecodeError or ConectionResetError:
                 print( "Connection lost.", flush=True)
                 self.Server.close()
                 self.handshake_connect()
