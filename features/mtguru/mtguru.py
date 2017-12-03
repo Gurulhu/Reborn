@@ -151,7 +151,7 @@ def card_search( token ):
                     for line in lines:
                         text = str( line )
                         if text.find( "<img" ) >= 0:
-                            text = re.sub( "(<.*?alt=\")(.*?)(\".*?>)", "\\2", text )
+                            text = re.sub( "(<img.*?alt=\")(.*?)(\".*?>)", "\\2", text )
                             text = re.sub( "<.*?>", "", text )
                         else:
                             text = line.text
