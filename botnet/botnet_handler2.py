@@ -35,11 +35,10 @@ class BotnetHandler( object ):
         self.monitor_loop.start()
         if self.alive:
             print( self.name + " up!", flush=True)
-            return 0
         else:
             print( self.name + " has failed!", flush=True)
-            self.cleanup()
-            return -1
+
+        return self.alive
 
     def refresh_module_list( self ):
         print( "Refreshing Calls list.", flush=True)
@@ -217,6 +216,6 @@ class BotnetHandler( object ):
 
         self.safe = True
         self.system.put( {"topic":[self.parent, self.name],
-                        "code":-1,
+                        "code":-2,
                         "ttl": 10,
                         "content": self.name + " has shut down."})

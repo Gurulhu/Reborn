@@ -83,6 +83,6 @@ class InterfaceHandler(object):
 
         self.safe = True
         self.system.put( {"topic":[self.parent, self.name],
-                        "code":-1,
+                        "code":-3,
                         "ttl": 10,
                         "content": self.name + " has shut down."})

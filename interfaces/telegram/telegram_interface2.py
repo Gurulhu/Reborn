@@ -52,7 +52,7 @@ class Interface(object):
                     print( "Incomming via: " + self.name, msg, flush=True )
                     last_read = int( query["update_id"] ) + 1
             except Exception as e:
-                print( "Error in " + self.name + ":", e, flush=True )
+                print( "Error in " + self.name + "!", flush=True ) #this one won't follow the pattern because it can recur indefinitely. Will open a ticket @telepot.
 
 
     def digest_replies(self):

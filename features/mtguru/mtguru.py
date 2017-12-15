@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 import requests
 import time
 import multiprocessing as mp
+import pandas as pd
 import re
 
 debug = True
@@ -279,8 +280,9 @@ def full_search( name ):
             })
 
         return card
-    except:
+    except Exception as e:
         print( "ERRO: ", name )
+	print( e )
         return []
 
 
@@ -327,6 +329,8 @@ def scrap():
 
     perf = time.time() - perf
     print( "Terminado em " + str( perf ) + " (segundos?)." )
+    cards = pd.DataFrame( cards )
+    cards.to_csv( data + ".csv", index=False )
     return cards
 
 def help():

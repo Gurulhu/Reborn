@@ -1,4 +1,5 @@
 import os
+import queue
 import multiprocessing
 
 import gurulhutils
@@ -47,16 +48,39 @@ class Bot( object ):
         try:
             print( "Starting Bot.", flush=True)
             self.keys_create()
-            while self.botnet_handler_create() < 0 :
-                gurulhutils.sleep(5000) #Most likely open sockets waiting to be flushed
-                print( "Retrying Botnet Handler\n", flush = True )
-            while self.interface_handler_create() < 0 :
+            self.botnet_handler_create()
+            self.interface_handler_create()
+
+            while not( self.BotnetHandler.alive and self.InterfaceHandler.alive ):
                 gurulhutils.sleep(1000)
-                print( "Retrying Interface Handler\n", flush = True )
 
             print( "Bot up!", flush=True)
+            self.run()
         except:
             self.cleanup()
+
+    def run(self):
+        while self.alive:
+            try:
+                sysmsg = self.system.get(True, 1)
+                if self.name in sysmsg["topic"]:
+                    print( self.name + " sysmsg:", sysmsg["content"] )
+                    if sysmsg["code"] == -1:
+                        self.alive = False
+                        self.cleanup()
+                    if sysmsg["code"] == -2:
+                        print( "Retrying Botnet Handler\n", flush = True )
+                        self.botnet_handler_create()
+                    if sysmsg["code"] == -3:
+                        print( "Retrying Interface Handler\n", flush = True )
+                        self.interface_handler_create()
+                else:
+                    self.system.put( sysmsg )
+
+            except queue.Empty:
+                pass
+            except Exception as e:
+                print( "Error in " + self.name + ":", e, flush=True )
 
     def cleanup(self):
         self.system.put( {"topic":[self.InterfaceHandler.name], "content":"Bot is shutting down.", "code":-1, "ttl":10} )
@@ -74,8 +98,14 @@ class Bot( object ):
 if __name__ == "__main__":
     main = Bot()
     main.start()
-    try:
-        input()
-    except:
-        pass
-    main.cleanup()
+
+    #main.cleanup()
+
+'''
+SYSMSG code table:
+
+Negative numbers mean Bad Things:
+-1: Panic//Bot is shutting down.
+-2: Botnet has shut down.
+-3: Interface handler has shut down
+'''
