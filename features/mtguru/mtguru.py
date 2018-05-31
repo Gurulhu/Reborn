@@ -25,23 +25,23 @@ def price_search( token ):
     try:
         token, opt = opt_check( token )
 
+        query = ""
+        for word in token:
+            query += "+" + str( word )
+
         if( opt ):
             if( opt == "-f" ):
-                query_string = "https://www.ligamagic.com.br/?view=cards%2Fsearch&card="
+                url = "https://www.ligamagic.com.br/?view=cards/card&card=" + query + "&aux=" + query
         else:
-            query_string = "https://www.ligamagic.com.br/?view=cards/card&card="
+            url = "https://www.ligamagic.com.br/?view=cards%2Fsearch&card=" + query
 
-        for word in token:
-            query_string += "+" + str( word )
 
-        r = requests.get( query_string )
+        r = requests.get( url )
 
         soup = BeautifulSoup( r.text, "html.parser" )
 
-        card_name = soup.find("p", class_="subtitulo-card")
-
-        if( card_name is None ):
-            card_name = soup.find("h3", class_="titulo-card b")
+        card_name = soup.find("p", class_="nome-principal")
+        card_name_aux = soup.find("p", class_="nome-auxiliar")
 
         if( card_name is None ):
             card_list = soup.find_all( class_=["pointer", "pointer zebra"] )
@@ -59,25 +59,50 @@ def price_search( token ):
             else:
                 return "text", "Sorry, couldn't find the card you wanted it."
 
-        expansion = soup.find( "ul", class_="edicoes" )
-        lines = expansion.find_all("li")
+        if( card_name_aux ):
+             card_name = card_name.text + "\n" + card_name_aux.text
+        else:
+            card_name = card_name.text
 
-        prices = []
-        for i in range( len( lines ) ):
-            exp = lines[i].contents[0].contents[0]["title"]
-            low = soup.find( id="omoPrimeMenor_" + str( i ) ).text.strip()
-            med = soup.find( id="omoPrimeMedio_" + str( i ) ).text.strip()
-            hig = soup.find( id="omoPrimeMaior_" + str( i ) ).text.strip()
-            prices.append( { "Expansion:" : exp, "Lowest:" : low, "Medium:": med, "Highest:": hig } )
+        is_flip = soup.find("div", class_="flip")
+        if( is_flip ):
+            is_flip = True
+            flip_name = soup.find("p", class_="nome-principal nome-principal-flip")
+            flip_name_aux = soup.find("p", class_="nome-principal nome-principal-flip")
+            if( flip_name_aux ):
+                flip_name = flip_name.text + "\n" + flip_name_aux.text
+            else:
+                flip_name = flip_name.text
+        else:
+            is__flip = False
+
+        scripts = soup.find_all("script")
+        for script in scripts:
+            if script.text.find("vetPorEdicao") > 0:
+                scripts = script
+                break
+        scripts = scripts.text.split("]=[")[1:]
+
+        prints = []
+        for conteudo in scripts:
+            print( conteudo[1:].split('","') )
+            rarity, number, artist, min_price, mean_price, max_price, _, _, _, _, _, edition, _ = conteudo[1:].split('","')
+            rarity = ["Common", "Uncommon", "Rare", "Mythic", "Promo"][int(rarity) - 1]
+            prints.append( [edition, rarity, number, artist, min_price, mean_price, max_price ] )
 
         reply = "    --//--    \n"
-        reply += "-> Card Name: \n" + str( card_name.text ) + "\n\n"
-        for price in prices:
-            reply += "-> Expansion: " + price["Expansion:"] + "\n"
-            reply += "Lowest: " + price["Lowest:"] + "\n"
-            reply += "Medium: " + price["Medium:"] + "\n"
-            reply += "Highest: " + price["Highest:"] + "\n\n"
+        reply += "-> Card Name: \n" + card_name + "\n\n"
+        if( is_flip ):
+            reply += "-> Flip Side: \n" + flip_name + "\n\n"
+        for _print in prints:
+            print( _print )
             reply += "    --//--    \n"
+            reply += "-> Expansion: " + _print[0] + "\n"
+            reply += "-> Rarity: " + _print[1] + "\n"
+            reply += "-> Artist: " + _print[3] + "\n"
+            reply += "Lowest: R$ " + _print[4] + "\n"
+            reply += "Medium: R$ " + _print[5] + "\n"
+            reply += "Highest: R$ " + _print[6] + "\n"
 
         return "text", reply
 
@@ -282,7 +307,7 @@ def full_search( name ):
         return card
     except Exception as e:
         print( "ERRO: ", name )
-	print( e )
+        print( e )
         return []
 
 
